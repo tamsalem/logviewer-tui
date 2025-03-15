@@ -63,6 +63,7 @@ go run .
 | `i`        | Filter: show only `INFO` logs      |
 | `d`        | Filter: show only `DEBUG` logs     |
 | `a`        | Show all logs                      |
+| `r`      | Set regex filters to exclude matching logs (comma-separated) |
 | `q` / `Ctrl+C` | Quit the viewer                |
 
 ---
