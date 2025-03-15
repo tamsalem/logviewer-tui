@@ -18,6 +18,20 @@ func max(a, b int) int {
 
 func (m model) View() string {
 	switch m.mode {
+	case modeFullDetail:
+		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("🔍 Full JSON Detail View")
+		footer := lipgloss.NewStyle().Faint(true).Render("(↑↓ scroll, q/esc back)")
+
+		// Compute visible lines
+		start := m.detailOffset
+		end := start + m.height - 4
+		if end > len(m.fullDetailLines) {
+			end = len(m.fullDetailLines)
+		}
+		content := strings.Join(m.fullDetailLines[start:end], "\n")
+
+		return fmt.Sprintf("%s\n\n%s\n\n%s", title, content, footer)
+
 	case modeRegexFilter:
 		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("🧹 Exclude Logs by Regex")
 		helper := lipgloss.NewStyle().Faint(true).Render("(Enter = apply filter, Esc = cancel)")
@@ -80,7 +94,7 @@ func (m model) View() string {
 
 		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("📊 Log Viewer")
 		helper := lipgloss.NewStyle().Faint(true).Render(
-			title + "(q quit, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter, r regex filter)",
+			title + "(q quit, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter, r regex exclude, v view full JSON)",
 		)
 		b.WriteString("\n" + helper + "\n")
 

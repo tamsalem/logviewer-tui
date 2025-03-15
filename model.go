@@ -1,17 +1,22 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
 	modePaste int = iota
 	modeView
-	modeRegexFilter // 👈 new mode
+	modeRegexFilter
+	modeFullDetail
 )
 
 type model struct {
@@ -21,9 +26,12 @@ type model struct {
 	logs            []logEntry
 	textarea        textarea.Model
 	height          int
+	width           int
 	offset          int
 	regexInput      textarea.Model
 	excludePatterns []*regexp.Regexp
+	fullDetailLines []string
+	detailOffset    int
 }
 
 func (m model) Init() tea.Cmd {
@@ -67,7 +75,7 @@ func (m *model) scrollUp() {
 func (m *model) scrollDown() {
 	if m.cursor < m.pageSize()-1 && m.cursor < len(m.pagedLogs())-1 {
 		m.cursor++
-	} else if m.offset+m.cursor+1 < len(m.filteredLogs()) {
+	} else if m.offset+m.cursor+1 < len(m.pagedLogs()) {
 		m.offset++
 	}
 }
@@ -100,27 +108,29 @@ outer:
 }
 
 func (m model) pagedLogs() []logEntry {
-	var visible []logEntry
+	var page []logEntry
 	logs := m.filteredLogs()
-	linesAvailable := m.height - 6 // adjust for header/footer
 
-	// Start from offset
+	linesAvailable := m.height - 4 // room for header + footer
+	linesUsed := 0
+
 	for i := m.offset; i < len(logs); i++ {
 		log := logs[i]
-		linesUsed := 1
+
+		used := 1 // base line
 		if log.Expanded && len(log.Details) > 0 {
-			linesUsed += strings.Count(renderStyledJSON(log.Details), "\n")
+			used += strings.Count(renderStyledJSON(log.Details), "\n")
 		}
 
-		if linesAvailable-linesUsed < 0 {
+		if linesUsed+used > linesAvailable {
 			break
 		}
 
-		visible = append(visible, log)
-		linesAvailable -= linesUsed
+		page = append(page, log)
+		linesUsed += used
 	}
 
-	return visible
+	return page
 }
 
 func compileRegexList(input string) []*regexp.Regexp {
@@ -137,12 +147,93 @@ func compileRegexList(input string) []*regexp.Regexp {
 	return patterns
 }
 
+func renderStyledJSONLines(data map[string]interface{}, width int) []string {
+	var lines []string
+	cyan := lipgloss.NewStyle().Foreground(lipgloss.Color("6"))    // keys
+	green := lipgloss.NewStyle().Foreground(lipgloss.Color("2"))   // strings
+	yellow := lipgloss.NewStyle().Foreground(lipgloss.Color("3"))  // numbers
+	magenta := lipgloss.NewStyle().Foreground(lipgloss.Color("5")) // booleans
+	gray := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))    // null
+
+	wrap := func(s string) []string {
+		var wrapped []string
+		for len(s) > width {
+			wrapped = append(wrapped, s[:width])
+			s = s[width:]
+		}
+		wrapped = append(wrapped, s)
+		return wrapped
+	}
+
+	renderValue := func(v interface{}) string {
+		switch val := v.(type) {
+		case string:
+			return green.Render(fmt.Sprintf(`"%s"`, val))
+		case float64, int:
+			return yellow.Render(fmt.Sprintf("%v", val))
+		case bool:
+			return magenta.Render(fmt.Sprintf("%v", val))
+		case nil:
+			return gray.Render("null")
+		default:
+			encoded, _ := json.Marshal(val)
+			return green.Render(string(encoded))
+		}
+	}
+
+	var keys []string
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		key := cyan.Render(fmt.Sprintf(`"%s"`, k))
+		val := renderValue(data[k])
+		line := fmt.Sprintf("  %s: %s", key, val)
+		lines = append(lines, wrap(line)...)
+	}
+
+	return lines
+}
+
+func wrapText(text string, width int) string {
+	var b strings.Builder
+	lines := strings.Split(text, "\n")
+	for _, line := range lines {
+		for len(line) > width {
+			b.WriteString(line[:width] + "\n")
+			line = line[width:]
+		}
+		b.WriteString(line + "\n")
+	}
+	return b.String()
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
+		m.width = msg.Width
 	}
 	switch m.mode {
+	case modeFullDetail:
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "q", "esc":
+				m.mode = modeView
+			case "up":
+				if m.detailOffset > 0 {
+					m.detailOffset--
+				}
+			case "down":
+				if m.detailOffset < len(m.fullDetailLines)-(m.height-4) {
+					m.detailOffset++
+				}
+			}
+		}
+
 	case modeRegexFilter:
 		var cmd tea.Cmd
 		m.regexInput, cmd = m.regexInput.Update(msg)
@@ -203,6 +294,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if len(logs) > m.cursor {
 					i := m.findLogIndex(logs[m.cursor])
 					m.logs[i].Expanded = !m.logs[i].Expanded
+				}
+			case "v":
+				logs := m.pagedLogs()
+				if len(logs) > m.cursor {
+					globalIndex := m.offset + m.cursor
+					if globalIndex >= 0 && globalIndex < len(m.logs) {
+						details := logs[globalIndex].Details
+						if len(details) > 0 {
+							lines := renderStyledJSONLines(details, m.width)
+							m.fullDetailLines = lines
+							m.detailOffset = 0
+							m.mode = modeFullDetail
+						}
+					}
 				}
 			case "e", "w", "i", "d", "a", "r":
 				m.cursor = 0
