@@ -27,7 +27,7 @@ func (m model) View() string {
 		helper := lipgloss.NewStyle().Faint(true).Render(
 			title + "(q quit, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter)",
 		)
-		b.WriteString("\n" + helper + "\n")
+		b.WriteString("\n" + helper + "\n\n")
 
 		filtered := m.pagedLogs()
 		// Adjust these for your layout preference
