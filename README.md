@@ -26,7 +26,7 @@ A terminal-based log viewer built with [BubbleTea](https://github.com/charmbrace
 
 ```bash
 git clone https://github.com/tamsalem/logviewer-tui.git
-cd <your-repo-name>
+cd logviewer-tui
 ```
 
 ### 2. Install dependencies
