@@ -18,16 +18,15 @@ func max(a, b int) int {
 
 func (m model) View() string {
 	switch m.mode {
+	case modeRegexFilter:
+		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("🧹 Exclude Logs by Regex")
+		helper := lipgloss.NewStyle().Faint(true).Render("(Enter = apply filter, Esc = cancel)")
+		return title + "\n\n" + m.regexInput.View() + "\n" + helper
 	case modePaste:
 		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("📋 Paste Mode")
 		return title + "\n\n" + m.textarea.View() + "\n\n(Enter = done, Esc = quit)"
 	case modeView:
 		var b strings.Builder
-		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("📊 Log Viewer")
-		helper := lipgloss.NewStyle().Faint(true).Render(
-			title + "(q quit, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter)",
-		)
-		b.WriteString("\n" + helper + "\n\n")
 
 		filtered := m.pagedLogs()
 		// Adjust these for your layout preference
@@ -78,6 +77,12 @@ func (m model) View() string {
 		if len(filtered) == 0 {
 			b.WriteString(lipgloss.NewStyle().Faint(true).Render("No logs match the selected filter.\n"))
 		}
+
+		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("📊 Log Viewer")
+		helper := lipgloss.NewStyle().Faint(true).Render(
+			title + "(q quit, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter, r regex filter)",
+		)
+		b.WriteString("\n" + helper + "\n")
 
 		return b.String()
 	}

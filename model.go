@@ -1,6 +1,7 @@
 package main
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textarea"
@@ -10,16 +11,19 @@ import (
 const (
 	modePaste int = iota
 	modeView
+	modeRegexFilter // 👈 new mode
 )
 
 type model struct {
-	mode     int
-	cursor   int
-	filter   string
-	logs     []logEntry
-	textarea textarea.Model
-	height   int
-	offset   int
+	mode            int
+	cursor          int
+	filter          string
+	logs            []logEntry
+	textarea        textarea.Model
+	height          int
+	offset          int
+	regexInput      textarea.Model
+	excludePatterns []*regexp.Regexp
 }
 
 func (m model) Init() tea.Cmd {
@@ -32,10 +36,15 @@ func initialModel() model {
 	ta.Focus()
 	ta.CharLimit = 0
 	ta.SetHeight(20)
+	regexTA := textarea.New()
+	regexTA.Placeholder = "Comma-separated regex to exclude (e.g. *debug*,*heartbeat$)"
+	regexTA.CharLimit = 0
+	regexTA.SetHeight(3)
 
 	return model{
-		mode:     modePaste,
-		textarea: ta,
+		mode:       modePaste,
+		textarea:   ta,
+		regexInput: regexTA,
 	}
 }
 
@@ -73,14 +82,19 @@ func (m model) findLogIndex(target logEntry) int {
 }
 
 func (m model) filteredLogs() []logEntry {
-	if m.filter == "" {
-		return m.logs
-	}
 	var filtered []logEntry
+outer:
 	for _, log := range m.logs {
-		if strings.EqualFold(log.Level, m.filter) {
-			filtered = append(filtered, log)
+		if m.filter != "" && !strings.EqualFold(log.Level, m.filter) {
+			continue
 		}
+		combined := log.Message + " " + log.Level + " " + log.Timestamp
+		for _, re := range m.excludePatterns {
+			if re.MatchString(combined) {
+				continue outer
+			}
+		}
+		filtered = append(filtered, log)
 	}
 	return filtered
 }
@@ -109,12 +123,47 @@ func (m model) pagedLogs() []logEntry {
 	return visible
 }
 
+func compileRegexList(input string) []*regexp.Regexp {
+	var patterns []*regexp.Regexp
+	for _, s := range strings.Split(input, ",") {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+		if re, err := regexp.Compile(s); err == nil {
+			patterns = append(patterns, re)
+		}
+	}
+	return patterns
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 	}
 	switch m.mode {
+	case modeRegexFilter:
+		var cmd tea.Cmd
+		m.regexInput, cmd = m.regexInput.Update(msg)
+
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case "enter":
+				input := m.regexInput.Value()
+				m.excludePatterns = compileRegexList(input)
+				m.mode = modeView
+				m.cursor = 0
+				m.offset = 0
+				return m, nil
+			case "esc", "ctrl+c":
+				m.mode = modeView
+				return m, nil
+			}
+		}
+		return m, cmd
+
 	case modePaste:
 		var cmd tea.Cmd
 		m.textarea, cmd = m.textarea.Update(msg)
@@ -155,7 +204,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					i := m.findLogIndex(logs[m.cursor])
 					m.logs[i].Expanded = !m.logs[i].Expanded
 				}
-			case "e", "w", "i", "d", "a":
+			case "e", "w", "i", "d", "a", "r":
 				m.cursor = 0
 				m.offset = 0
 
@@ -175,6 +224,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.filter = "DEBUG"
 				case "a":
 					m.filter = ""
+					m.excludePatterns = nil
+				case "r":
+					m.mode = modeRegexFilter
+					m.regexInput.Focus()
+					m.regexInput.SetValue("")
 				}
 			}
 		}
