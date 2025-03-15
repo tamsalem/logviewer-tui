@@ -43,7 +43,7 @@ This will fetch:
 ### 3. Run the app
 
 ```bash
-go run main.go
+go run .
 ```
 
 ---
