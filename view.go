@@ -25,7 +25,7 @@ func (m model) View() string {
 		var b strings.Builder
 		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("📊 Log Viewer")
 		helper := lipgloss.NewStyle().Faint(true).Render(
-			title + "(q quit, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter, x expand all, z collapse all)",
+			title + "(q quit, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter)",
 		)
 		b.WriteString("\n" + helper + "\n")
 
