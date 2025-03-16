@@ -75,7 +75,7 @@ func (m *model) scrollUp() {
 func (m *model) scrollDown() {
 	if m.cursor < m.pageSize()-1 && m.cursor < len(m.pagedLogs())-1 {
 		m.cursor++
-	} else if m.offset+m.cursor+1 < len(m.pagedLogs()) {
+	} else if m.offset+m.cursor+1 < len(m.filteredLogs()) {
 		m.offset++
 	}
 }
