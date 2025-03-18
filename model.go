@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -197,23 +198,15 @@ func renderStyledJSONLines(data map[string]interface{}, width int) []string {
 	return lines
 }
 
-func wrapText(text string, width int) string {
-	var b strings.Builder
-	lines := strings.Split(text, "\n")
-	for _, line := range lines {
-		for len(line) > width {
-			b.WriteString(line[:width] + "\n")
-			line = line[width:]
-		}
-		b.WriteString(line + "\n")
-	}
-	return b.String()
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.height = msg.Height
+		m.height = msg.Height - 10
 		m.width = msg.Width
 	}
 	switch m.mode {
@@ -264,6 +257,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "enter":
 				input := m.textarea.Value()
+				trimmed := strings.TrimSpace(input)
+
+				// 🧠 If user drag-dropped a file path
+				if fileExists(trimmed) {
+					content, err := os.ReadFile(trimmed)
+					if err != nil {
+						m.textarea.Placeholder = "❌ Failed to read file."
+						m.textarea.SetValue("")
+						return m, nil
+					}
+					parsed := parseLogs(string(content))
+					if len(parsed) == 0 {
+						m.textarea.Placeholder = "⚠️ File has no valid logs."
+						m.textarea.SetValue("")
+						return m, nil
+					}
+					m.logs = parsed
+					m.mode = modeView
+					return m, nil
+				}
+
+				// 🧾 Normal input path
 				parsed := parseLogs(input)
 				if len(parsed) == 0 {
 					m.textarea.Placeholder = "⚠️ No valid logs found. Try again."
@@ -294,6 +309,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if len(logs) > m.cursor {
 					i := m.findLogIndex(logs[m.cursor])
 					m.logs[i].Expanded = !m.logs[i].Expanded
+				}
+			case "home":
+				m.offset = 0
+				m.cursor = 0
+
+			case "end":
+				logCount := len(m.filteredLogs())
+				pageSize := m.pageSize()
+
+				if logCount > pageSize {
+					m.offset = logCount - pageSize
+					m.cursor = pageSize - 1
+				} else {
+					m.offset = 0
+					m.cursor = logCount - 1
 				}
 			case "v":
 				logs := m.pagedLogs()
