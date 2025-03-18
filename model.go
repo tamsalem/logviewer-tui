@@ -327,18 +327,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "v":
 				logs := m.pagedLogs()
-				if len(logs) > m.cursor {
-					globalIndex := m.offset + m.cursor
-					if globalIndex >= 0 && globalIndex < len(m.logs) {
-						details := logs[globalIndex].Details
-						if len(details) > 0 {
-							lines := renderStyledJSONLines(details, m.width)
-							m.fullDetailLines = lines
-							m.detailOffset = 0
-							m.mode = modeFullDetail
-						}
-					}
+				if len(logs) == 0 || m.cursor >= len(logs) {
+					return m, nil
 				}
+
+				log := logs[m.cursor]
+				if len(log.Details) == 0 {
+					return m, nil
+				}
+				lines := renderStyledJSONLines(log.Details, m.width)
+				m.fullDetailLines = lines
+				m.detailOffset = 0
+				m.mode = modeFullDetail
 			case "e", "w", "i", "d", "a", "r":
 				m.cursor = 0
 				m.offset = 0
