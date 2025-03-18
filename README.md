@@ -64,6 +64,7 @@ go run .
 | `d`        | Filter: show only `DEBUG` logs     |
 | `a`        | Show all logs                      |
 | `r`      | Set regex filters to exclude matching logs (comma-separated) |
+| `v`      | view full JSON details |
 | `q` / `Ctrl+C` | Quit the viewer                |
 
 ---
