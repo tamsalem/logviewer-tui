@@ -38,7 +38,14 @@ func (m model) View() string {
 		return title + "\n\n" + m.regexInput.View() + "\n" + helper
 	case modePaste:
 		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("📋 Paste Mode")
-		return title + "\n\n" + m.textarea.View() + "\n\n(Enter = done, Esc = quit)"
+
+		hint := lipgloss.NewStyle().Faint(true).Render(`
+Instructions:
+• Paste logs directly into the input area below (limited to ~99 lines).
+• For larger log files, drag and drop a .log or .txt or .json file into the terminal to load automatically.
+• Press Enter to continue or Esc to cancel.
+`)
+		return title + "\n\n" + m.textarea.View() + "\n" + hint + "\n\n(Enter = done, Esc = quit)"
 	case modeView:
 		var b strings.Builder
 
