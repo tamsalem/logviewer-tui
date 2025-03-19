@@ -48,13 +48,19 @@ This pulls all required libraries:
 - `bubbles/textarea`
 - `lipgloss`
 
-### 3. Build the executable
+### 3. Run
+
+```bash
+go run .
+```
+
+### 4. (Optional) Build the executable
 
 ```bash
 go build -o logviewer
 ```
 
-### 4. (Optional) Move it to your `$PATH`
+### 5. (Optional) Move it to your `$PATH`
 
 ```bash
 sudo mv logviewer /usr/local/bin/
@@ -82,9 +88,9 @@ logviewer
 
 ## 🏷️ Command-Line Flags
 
-| Flag           | Description                                                                 |
-|----------------|-----------------------------------------------------------------------------|
-| `--workflow`   | (Optional) Provide an Argo Workflow UID or name to fetch logs from Argo API |
+| Flag           | Description                                                          |
+|----------------|----------------------------------------------------------------------|
+| `--workflow`   | (Optional) Provide an Argo Workflow name to fetch logs from Argo API |
 
 ### Example
 
