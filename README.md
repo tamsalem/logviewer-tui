@@ -1,22 +1,30 @@
 # 📊 TUI Log Viewer
 
-A terminal-based log viewer built with [BubbleTea](https://github.com/charmbracelet/bubbletea) and [LipGloss](https://github.com/charmbracelet/lipgloss). Paste your logs and explore them with keyboard navigation, color-coded levels, collapsible details, and filtering — all in your terminal.
+A terminal-based log viewer built with [BubbleTea](https://github.com/charmbracelet/bubbletea) and [LipGloss](https://github.com/charmbracelet/lipgloss). Easily explore structured logs with keyboard navigation, color-coded levels, collapsible metadata, filtering, and more — all in your terminal.
 
 ---
 
 ## ✨ Features
 
-- 📋 **Paste logs** directly into a terminal editor
-- 🎨 **Color-coded levels**:
-  - `ERROR` → red (full line)
-  - `WARN` → yellow (full line)
-  - `INFO` → blue (level only)
-  - `DEBUG` → gray (level only)
-- 📏 **Aligned log format** — messages always start at the same column
-- 🔍 **Filter logs** by level: `e`, `w`, `i`, `d`, `a`
-- 🔽 **Expand/collapse** remaining log fields (JSON object)
-- 🧾 **Colorized JSON** for key/value pairs
-- ⌨️ **Keyboard navigation** (see controls below)
+- 📋 Paste JSON logs directly into the terminal
+- 🎨 Color-coded log levels:
+  - `ERROR` → Red (entire line)
+  - `WARN`  → Yellow (entire line)
+  - `INFO`  → Blue (level only)
+  - `DEBUG` → Gray (level only)
+- 📐 Aligned log formatting — message text always starts at the same column
+- 🔍 Level-based filtering: `e`, `w`, `i`, `d`, `a`
+- 🔽 Expand/collapse log fields with pretty-printed, colorized JSON
+- 🧠 Regex-based exclusion filtering
+- ⌨️ Keyboard-first navigation for log review
+- ⚙️ Support for fetching logs from Argo Workflows (`--workflow` flag)
+
+---
+
+## ✅ Requirements
+
+- [Go](https://golang.org/doc/install) 1.18 or higher
+- A terminal that supports ANSI colors (e.g. iTerm2, Alacritty, VS Code)
 
 ---
 
@@ -35,70 +43,24 @@ cd logviewer-tui
 go mod tidy
 ```
 
-This will fetch:
+This pulls all required libraries:
 - `bubbletea`
 - `bubbles/textarea`
 - `lipgloss`
 
-### 3. Run the app
-
-```bash
-go run .
-```
-
----
-
-## 🧑‍💻 How to Use
-
-1. Paste your **JSON-formatted logs** (one per line)
-2. Press `Enter` to enter viewer mode
-3. Use the keyboard:
-
-| Key        | Action                             |
-|------------|------------------------------------|
-| ↑ / ↓      | Move between log entries           |
-| `Enter` / ␣ | Expand/collapse log details        |
-| `e`        | Filter: show only `ERROR` logs     |
-| `w`        | Filter: show only `WARN` logs      |
-| `i`        | Filter: show only `INFO` logs      |
-| `d`        | Filter: show only `DEBUG` logs     |
-| `a`        | Show all logs                      |
-| `r`      | Set regex filters to exclude matching logs (comma-separated) |
-| `v`      | view full JSON details |
-| `q` / `Ctrl+C` | Quit the viewer                |
-
----
-
-## 📎 Log Format Example
-
-```json
-{"level":"INFO","timestamp":"2025-03-13T16:05:36.013Z","message":"MongoDB initialized"}
-{"level":"ERROR","timestamp":"2025-03-13T16:06:00.000Z","message":"Something failed","code":500}
-```
-
-Any additional fields will be available when expanding the log.
-
----
-
-### ⚙️ Optional: Build an executable
+### 3. Build the executable
 
 ```bash
 go build -o logviewer
 ```
 
-Run it directly:
-
-```bash
-./logviewer
-```
-
-Or move it to your system path:
+### 4. (Optional) Move it to your `$PATH`
 
 ```bash
 sudo mv logviewer /usr/local/bin/
 ```
 
-Now use it anywhere:
+Now you can run it globally:
 
 ```bash
 logviewer
@@ -106,16 +68,70 @@ logviewer
 
 ---
 
-## ✅ Requirements
+## 🚀 Usage
 
-- [Go](https://golang.org/doc/install) (v1.18+ recommended)
-- Terminal that supports ANSI colors (iTerm2, Alacritty, VS Code terminal, etc.)
+```bash
+logviewer
+```
+
+1. Paste JSON-formatted logs (one object per line)
+2. Press `Enter` to parse and enter viewer mode
+3. Navigate using the keyboard
 
 ---
 
-## 🛠 Roadmap / Ideas
+## 🏷️ Command-Line Flags
 
-- 🔍 Open for suggestions
+| Flag           | Description                                                                 |
+|----------------|-----------------------------------------------------------------------------|
+| `--workflow`   | (Optional) Provide an Argo Workflow UID or name to fetch logs from Argo API |
+
+### Example
+
+```bash
+logviewer --workflow 9f9aab90-319b-4655-905c-7ea2db0ef550
+```
+
+- Connects to your local Argo server (`http://localhost:2746`)
+- Prompts you to select a workflow step
+- Loads and renders the logs for that step
+
+---
+
+## ⌨️ Controls
+
+| Key         | Action                                           |
+|-------------|--------------------------------------------------|
+| ↑ / ↓       | Navigate between log entries                     |
+| `Enter` / ␣ | Expand or collapse log metadata                  |
+| `e`         | Filter: only show `ERROR` logs                   |
+| `w`         | Filter: only show `WARN` logs                    |
+| `i`         | Filter: only show `INFO` logs                    |
+| `d`         | Filter: only show `DEBUG` logs                   |
+| `a`         | Reset filters and show all logs                  |
+| `r`         | Set regex to exclude logs (comma-separated)      |
+| `v`         | View full details (pretty JSON) in full-screen   |
+| `home/end`  | Jump to top / bottom                             |
+| `q` / Ctrl+C| Quit the viewer                                  |
+
+---
+
+## 💡 Paste Mode Tips
+
+- For large logs, use **drag-and-drop** to insert a `.json` or `.log` file into the terminal
+- Paste mode supports up to ~99 lines directly
+- Logs must be line-delimited JSON objects
+
+---
+
+## 🧾 Example Log Format
+
+```json
+{"level":"INFO","timestamp":"2025-03-13T16:05:36.013Z","message":"MongoDB initialized"}
+{"level":"ERROR","timestamp":"2025-03-13T16:06:00.000Z","message":"Something failed","code":500}
+```
+
+Any additional fields (e.g. `code`, `context`) will be shown when expanded.
 
 ---
 
@@ -125,9 +141,9 @@ Apache-2.0 — use freely, build awesomely 🚀
 
 ---
 
-## 💬 Credits
+## 🙌 Credits
 
-Built with:
+Powered by:
 
 - [BubbleTea](https://github.com/charmbracelet/bubbletea)
 - [LipGloss](https://github.com/charmbracelet/lipgloss)
