@@ -288,6 +288,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.logs = parsed
 				m.mode = modeView
 				return m, nil
+			case "ctrl+z":
+				m.textarea.SetValue("")
 			case "ctrl+c", "esc":
 				return m, tea.Quit
 			}
@@ -365,6 +367,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.regexInput.Focus()
 					m.regexInput.SetValue("")
 				}
+
+			case "z":
+				m.textarea.SetValue("")
+				m.mode = modePaste
 			}
 		}
 	}
