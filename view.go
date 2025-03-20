@@ -45,7 +45,7 @@ Instructions:
 • For larger log files, drag and drop a .log or .txt or .json file into the terminal to load automatically.
 • Press Enter to continue or Esc to cancel.
 `)
-		return title + "\n\n" + m.textarea.View() + "\n" + hint + "\n\n(Enter = done, Esc = quit)"
+		return title + "\n\n" + m.textarea.View() + "\n" + hint + "\n\n(Enter = done, ctrl-z = clear, Esc = quit)"
 	case modeView:
 		var b strings.Builder
 
@@ -101,7 +101,7 @@ Instructions:
 
 		title := lipgloss.NewStyle().Bold(true).Underline(true).Render("📊 Log Viewer")
 		helper := lipgloss.NewStyle().Faint(true).Render(
-			title + "(q quit, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter, r regex exclude, v view full JSON)",
+			title + "(q quit, z back, ↑↓ scroll, ⏎/space expand, e/w/i/d/a filter, r regex exclude, v view full JSON)",
 		)
 		b.WriteString("\n" + helper + "\n")
 

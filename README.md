@@ -117,8 +117,9 @@ logviewer --workflow 9f9aab90-319b-4655-905c-7ea2db0ef550
 | `a`                | Reset filters and show all logs                  |
 | `r`                | Set regex to exclude logs (comma-separated)      |
 | `v`                | View full details (pretty JSON) in full-screen   |
-| `home/end` / `g/G`  | Jump to top / bottom                             |
+| `home/end` / `g/G` | Jump to top / bottom                             |
 | `q` / Ctrl+C       | Quit the viewer                                  |
+| `z`                | Return to start                                  |
 
 ---
 
