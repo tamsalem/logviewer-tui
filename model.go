@@ -310,11 +310,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					i := m.findLogIndex(logs[m.cursor])
 					m.logs[i].Expanded = !m.logs[i].Expanded
 				}
-			case "home":
+			case "home", "g":
 				m.offset = 0
 				m.cursor = 0
 
-			case "end":
+			case "end", "G":
 				logCount := len(m.filteredLogs())
 				pageSize := m.pageSize()
 
