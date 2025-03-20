@@ -106,19 +106,19 @@ logviewer --workflow 9f9aab90-319b-4655-905c-7ea2db0ef550
 
 ## ⌨️ Controls
 
-| Key         | Action                                           |
-|-------------|--------------------------------------------------|
-| ↑ / ↓       | Navigate between log entries                     |
-| `Enter` / ␣ | Expand or collapse log metadata                  |
-| `e`         | Filter: only show `ERROR` logs                   |
-| `w`         | Filter: only show `WARN` logs                    |
-| `i`         | Filter: only show `INFO` logs                    |
-| `d`         | Filter: only show `DEBUG` logs                   |
-| `a`         | Reset filters and show all logs                  |
-| `r`         | Set regex to exclude logs (comma-separated)      |
-| `v`         | View full details (pretty JSON) in full-screen   |
-| `home/end`  | Jump to top / bottom                             |
-| `q` / Ctrl+C| Quit the viewer                                  |
+| Key                | Action                                           |
+|--------------------|--------------------------------------------------|
+| ↑ / ↓              | Navigate between log entries                     |
+| `Enter` / ␣        | Expand or collapse log metadata                  |
+| `e`                | Filter: only show `ERROR` logs                   |
+| `w`                | Filter: only show `WARN` logs                    |
+| `i`                | Filter: only show `INFO` logs                    |
+| `d`                | Filter: only show `DEBUG` logs                   |
+| `a`                | Reset filters and show all logs                  |
+| `r`                | Set regex to exclude logs (comma-separated)      |
+| `v`                | View full details (pretty JSON) in full-screen   |
+| `home/end` / `g/G`  | Jump to top / bottom                             |
+| `q` / Ctrl+C       | Quit the viewer                                  |
 
 ---
 
