@@ -298,6 +298,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case modeView:
 		switch key := msg.(type) {
+		case tea.MouseMsg:
+			switch key.String() {
+			case "wheel down":
+				m.scrollDown()
+			case "wheel up":
+				m.scrollUp()
+			}
 		case tea.KeyMsg:
 			switch key.String() {
 			case "ctrl+c", "q":

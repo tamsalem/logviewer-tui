@@ -23,7 +23,7 @@ func main() {
 		m.mode = modeView
 	}
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	if _, err := tea.NewProgram(m, tea.WithMouseCellMotion()).Run(); err != nil {
 		fmt.Println("Error:", err)
 	}
 }
